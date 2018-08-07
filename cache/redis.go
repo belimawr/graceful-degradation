@@ -18,7 +18,8 @@ func New(addr string, timeout time.Duration) Cache {
 		Addr:         addr,
 		ReadTimeout:  timeout,
 		WriteTimeout: timeout,
-		DialTimeout:  timeout,
+		DialTimeout:  timeout / 2,
+		PoolTimeout:  timeout / 2,
 		PoolSize:     2,
 	})
 

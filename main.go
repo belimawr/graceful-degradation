@@ -54,13 +54,13 @@ func main() {
 		Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	fetcher := teams.New(scoresURL, 10*time.Second)
-	redis := cache.New(redisURL, 1*time.Second)
+	redis := cache.New(redisURL, redisTimeout)
 
 	naive := resolver.NewNaive(fetcher, languages)
 	cached := resolver.NewCached(redis, fetcher, languages)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Timeout(500 * time.Millisecond))
+	r.Use(middleware.Timeout(httpTimeout))
 	r.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
 	r.Use(middleware.Logger)
 	r.Use(hlog.NewHandler(logger))
