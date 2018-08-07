@@ -1,8 +1,26 @@
-graceful-shutdown
+# Graceful Degradation and Timeout
+
+This code was used to present a talk on Berlin Golang Meetup on 07/08/2018.
+
+This project still a working in progress and there will improvements on it.
+
+## Running
+```
+// Install dependencies
+$ dep ensure
+
+// Run application
+$ go run main.go
+
+// Help
+$ go run main.go --help
+
+// Building
+$ go build
+```
 
 
-
-Commands:
+## Toxiproxy Commands
 ```
 $ toxiproxy-cli create redis -l localhost:26379 -u localhost:6379
 
