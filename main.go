@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net/http"
 	"os"
 	"time"
@@ -12,14 +13,40 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 )
 
-const scoresURL = "https://score-api.onefootball.com"
-const addr = ":3000"
+var scoresURL = "https://scores-api.onefootball.com"
+var addr = ":3000"
+var redisURL = "localhost:6379"
+var redisTimeout = 500 * time.Millisecond
+var httpTimeout = 5 * time.Second
+var requestTimeout = 1 * time.Second
 
 var languages = []string{"en", "br", "de"}
 
 func main() {
+	flag.StringVar(&redisURL, "redisURL", redisURL, "Defines redis URL")
+	flag.StringVar(&scoresURL, "scoresURL", scoresURL, "Defines scores URL")
+	flag.StringVar(&addr, "addr", addr, "Web server address")
+
+	flag.DurationVar(
+		&redisTimeout,
+		"redisTimeout",
+		redisTimeout,
+		"Defines redis timeouts")
+	flag.DurationVar(
+		&httpTimeout,
+		"httpTimeout",
+		httpTimeout,
+		"Defines http.Client timeout")
+	flag.DurationVar(
+		&redisTimeout,
+		"requestTimeout",
+		requestTimeout,
+		"Defines the timeout set on the context of incoming requests")
+	flag.Parse()
+
 	logger := zerolog.New(os.Stderr).
 		With().
 		Timestamp().
@@ -27,15 +54,16 @@ func main() {
 		Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	fetcher := teams.New(scoresURL, 10*time.Second)
-	redis := cache.New("localhost:6379")
+	redis := cache.New(redisURL, 1*time.Second)
 
 	naive := resolver.NewNaive(fetcher, languages)
 	cached := resolver.NewCached(redis, fetcher, languages)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Timeout(500 * time.Millisecond))
-	r.Use(middleware.RequestID)
+	r.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
 	r.Use(middleware.Logger)
+	r.Use(hlog.NewHandler(logger))
 
 	r.Get("/naive", handlers.NewResolverHandler(naive))
 	r.Get("/cached", handlers.NewResolverHandler(cached))
