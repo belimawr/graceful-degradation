@@ -128,7 +128,8 @@ func (c cached) fromCache(
 
 		if r.err != nil {
 			logger.Warn().Err(r.err).Msgf("fetching team: %d, lang: %s",
-				r.job.lang, r.team.ID)
+				r.job.id, r.job.lang)
+			misses = append(misses, r.job)
 			continue
 		}
 
@@ -144,14 +145,12 @@ func (c cached) jobFromCache(
 	resultChan chan<- result,
 	j job) {
 
-	logger := zerolog.Ctx(ctx)
 	defer wg.Done()
 
 	key := fmt.Sprintf(keyFtm, j.lang, j.id)
 
 	val, err := c.cache.Get(ctx, key)
 	if err == cache.ErrNotFound {
-		logger.Debug().Msg("miss")
 		resultChan <- result{
 			job: j,
 			err: errNotFound,
@@ -162,7 +161,6 @@ func (c cached) jobFromCache(
 
 	team := Team{}
 	if err := json.Unmarshal(val, &team); err != nil {
-		logger.Debug().Msg("cache error")
 		resultChan <- result{
 			job: j,
 			err: err,
@@ -170,7 +168,6 @@ func (c cached) jobFromCache(
 		return
 	}
 
-	logger.Debug().Msg("hit")
 	resultChan <- result{
 		job:  j,
 		err:  err,

@@ -23,6 +23,7 @@ func NewResolverHandler(resolver resolver.Resolver) http.HandlerFunc {
 		for _, el := range split {
 			id, err := strconv.Atoi(el)
 			if err != nil {
+				logger.Error().Err(err).Msg("parsing querystring")
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
@@ -36,7 +37,7 @@ func NewResolverHandler(resolver resolver.Resolver) http.HandlerFunc {
 		)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			logger.Error().Err(err).Msg("resolving teams")
 			return
 		}
 

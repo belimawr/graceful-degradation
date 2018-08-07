@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/rs/zerolog"
@@ -12,9 +13,13 @@ type redisCache struct {
 }
 
 // New returns a Redis implementation of Cache
-func New(addr string) Cache {
+func New(addr string, timeout time.Duration) Cache {
 	client := redis.NewClient(&redis.Options{
-		Addr: addr,
+		Addr:         addr,
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
+		DialTimeout:  timeout,
+		PoolSize:     2,
 	})
 
 	return redisCache{
@@ -31,7 +36,7 @@ func (r redisCache) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 
 	if err != nil {
-		logger.Error().Err(err).Msg("reding from cache")
+		logger.Error().Err(err).Msgf("reading from cache: %q", key)
 		return []byte{}, err
 	}
 

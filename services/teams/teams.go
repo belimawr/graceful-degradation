@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/rs/zerolog"
 )
 
 const pathFmt = "%s/v1/%s/teams/%d"
@@ -47,30 +45,33 @@ func New(url string, timeout time.Duration) Fetcher {
 
 // Fetch - featchs teams from scores-api
 func (f fetcher) Fetch(ctx context.Context, lang string, id int) (Team, error) {
-	logger := zerolog.Ctx(ctx)
+	//logger := zerolog.Ctx(ctx)
 
 	url := fmt.Sprintf(pathFmt, f.url, lang, id)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		logger.Error().Err(err).Msg("creating request to scores-api")
+		//logger.Error().Err(err).Msg("creating request to scores-api")
 		return Team{}, err
 	}
 
+	req = req.WithContext(ctx)
+
 	resp, err := f.client.Do(req)
 	if err != nil {
-		logger.Error().Err(err).Msg("could not call scores-api")
+		//logger.Error().Err(err).Msg("could not call scores-api")
+		return Team{}, err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		logger.Error().Msgf("got non ok status: %d", resp.StatusCode)
+		//logger.Error().Msgf("got non ok status: %d", resp.StatusCode)
 		return Team{}, err
 	}
 
 	teams := []Team{}
 	if err := json.NewDecoder(resp.Body).Decode(&teams); err != nil {
-		logger.Error().Err(err).Msg("decoding response body")
+		//logger.Error().Err(err).Msg("decoding response body")
 		return Team{}, err
 	}
 	return teams[0], nil
