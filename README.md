@@ -19,8 +19,11 @@ $ go run main.go --help
 $ go build
 ```
 
+## Toxiproxy
+Toxiproxy is a framework for simulating network conditions/issues, here is it's GitHub:
+https://github.com/Shopify/toxiproxy
 
-## Toxiproxy Commands
+**Some example of how to use it:**
 ```
 $ toxiproxy-cli create redis -l localhost:26379 -u localhost:6379
 
