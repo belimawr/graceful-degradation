@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/belimawr/graceful-shutdown/cache"
-	"github.com/belimawr/graceful-shutdown/services/teams"
+	"github.com/belimawr/graceful-degradation/cache"
+	"github.com/belimawr/graceful-degradation/services/teams"
 	"github.com/rs/zerolog"
 )
 

@@ -3,7 +3,7 @@ package resolver
 import (
 	"context"
 
-	"github.com/belimawr/graceful-shutdown/services/teams"
+	"github.com/belimawr/graceful-degradation/services/teams"
 	"github.com/rs/zerolog"
 )
 

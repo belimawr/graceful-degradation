@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/belimawr/graceful-shutdown/resolver"
+	"github.com/belimawr/graceful-degradation/resolver"
 	"github.com/rs/zerolog"
 )
 
