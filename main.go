@@ -63,9 +63,9 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Timeout(requestTimeout))
+	r.Use(hlog.NewHandler(logger))
 	r.Use(hlog.RequestIDHandler("request_id", "Request-ID"))
 	r.Use(middleware.Logger)
-	r.Use(hlog.NewHandler(logger))
 
 	r.Get("/naive", handlers.NewResolverHandler(naive))
 	r.Get("/cached", handlers.NewResolverHandler(cached))

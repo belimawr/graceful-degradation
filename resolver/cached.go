@@ -69,14 +69,16 @@ func (c cached) ResolveTeams(
 		}
 	}
 
-	logger.Debug().Msgf("fetching %d teams from cache", len(jobs))
+	logger.Info().Msgf("fetching %d teams from cache", len(jobs))
 
 	hits, misses := c.fromCache(ctx, jobs)
 	for _, r := range hits {
 		teamsMap[r.job.lang] = append(teamsMap[r.job.lang], r.team)
 	}
 
-	logger.Debug().Msgf("fetching %d teams from scores", len(misses))
+	logger.Info().Msgf("cache Hits: %d, cache misses: %d",
+		len(hits), len(misses))
+	logger.Info().Msgf("fetching %d teams from scores", len(misses))
 
 	results := c.fromScores(ctx, misses)
 
@@ -103,7 +105,10 @@ func (c cached) fromCache(
 	ctx context.Context,
 	jobs []job) (hits []result, misses []job) {
 
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("_function", "cached.fromCache").
+		Logger()
 
 	wg := sync.WaitGroup{}
 	resChan := make(chan result, len(jobs))
@@ -127,7 +132,7 @@ func (c cached) fromCache(
 		}
 
 		if r.err != nil {
-			logger.Warn().Err(r.err).Msgf("fetching team: %d, lang: %s",
+			logger.Warn().Err(r.err).Msgf("fetching team: %4d, lang: %s",
 				r.job.id, r.job.lang)
 			misses = append(misses, r.job)
 			continue
@@ -144,6 +149,11 @@ func (c cached) jobFromCache(
 	wg *sync.WaitGroup,
 	resultChan chan<- result,
 	j job) {
+
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("_function", "cached.jobFromCache").
+		Logger()
 
 	defer wg.Done()
 
@@ -166,6 +176,7 @@ func (c cached) jobFromCache(
 
 	team := Team{}
 	if err := json.Unmarshal(val, &team); err != nil {
+		logger.Debug().Err(err).Msgf("unmarshaling: %q", val)
 		resultChan <- result{
 			job: j,
 			err: err,
@@ -186,7 +197,10 @@ func (c cached) executeJob(
 	resultChan chan<- result,
 	j job) {
 
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("_function", "cached.executeJob").
+		Logger()
 
 	defer wg.Done()
 	fetcherTeam, err := c.fetcher.Fetch(ctx, j.lang, j.id)
@@ -201,7 +215,7 @@ func (c cached) executeJob(
 		key := fmt.Sprintf(keyFtm, j.lang, j.id)
 		value, _ := json.Marshal(team)
 		if err := c.cache.Set(ctx, key, value); err != nil {
-			logger.Warn().Err(err).Msgf("setting (%s, %d) on cache",
+			logger.Warn().Err(err).Msgf("setting (%s, %4d) on cache",
 				j.lang, j.id)
 		}
 	}

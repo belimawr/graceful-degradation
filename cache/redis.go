@@ -28,7 +28,10 @@ func New(addr string, timeout time.Duration) Cache {
 
 }
 func (r redisCache) Get(ctx context.Context, key string) ([]byte, error) {
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("_function", "redisCache.Get").
+		Logger()
 
 	value, err := r.client.Get(key).Bytes()
 	if err == redis.Nil {
@@ -36,7 +39,7 @@ func (r redisCache) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 
 	if err != nil {
-		logger.Error().Err(err).Msgf("reading from cache: %q", key)
+		logger.Debug().Err(err).Msgf("reading from cache: %q", key)
 		return []byte{}, err
 	}
 
@@ -44,11 +47,14 @@ func (r redisCache) Get(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (r redisCache) Set(ctx context.Context, key string, value []byte) error {
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("_function", "redisCache.Set").
+		Logger()
 
 	err := r.client.Set(key, value, 0).Err()
 	if err != nil {
-		logger.Error().Err(err).Msgf("could not set key %q from cache", key)
+		logger.Debug().Err(err).Msgf("could not set key %q from cache", key)
 		return err
 	}
 
