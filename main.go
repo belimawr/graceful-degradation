@@ -19,9 +19,9 @@ import (
 var scoresURL = "https://scores-api.onefootball.com"
 var addr = ":3000"
 var redisURL = "localhost:6379"
-var redisTimeout = 500 * time.Millisecond
-var httpTimeout = 5 * time.Second
+var redisTimeout = 300 * time.Millisecond
 var requestTimeout = 1 * time.Second
+var verbose bool
 
 var languages = []string{"en", "br", "de"}
 
@@ -29,6 +29,7 @@ func main() {
 	flag.StringVar(&redisURL, "redisURL", redisURL, "Defines redis URL")
 	flag.StringVar(&scoresURL, "scoresURL", scoresURL, "Defines scores URL")
 	flag.StringVar(&addr, "addr", addr, "Web server address")
+	flag.BoolVar(&verbose, "verbose", false, "Verbose logging")
 
 	flag.DurationVar(
 		&redisTimeout,
@@ -36,16 +37,17 @@ func main() {
 		redisTimeout,
 		"Defines redis timeouts")
 	flag.DurationVar(
-		&httpTimeout,
-		"httpTimeout",
-		httpTimeout,
-		"Defines http.Client timeout")
-	flag.DurationVar(
-		&redisTimeout,
+		&requestTimeout,
 		"requestTimeout",
 		requestTimeout,
 		"Defines the timeout set on the context of incoming requests")
 	flag.Parse()
+
+	if verbose {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
 
 	logger := zerolog.New(os.Stderr).
 		With().
@@ -53,15 +55,15 @@ func main() {
 		Logger().
 		Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	fetcher := teams.New(scoresURL, 10*time.Second)
+	fetcher := teams.New(scoresURL)
 	redis := cache.New(redisURL, redisTimeout)
 
 	naive := resolver.NewNaive(fetcher, languages)
 	cached := resolver.NewCached(redis, fetcher, languages)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Timeout(httpTimeout))
-	r.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
+	r.Use(middleware.Timeout(requestTimeout))
+	r.Use(hlog.RequestIDHandler("request_id", "Request-ID"))
 	r.Use(middleware.Logger)
 	r.Use(hlog.NewHandler(logger))
 

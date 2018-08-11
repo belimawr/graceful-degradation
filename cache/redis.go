@@ -20,7 +20,6 @@ func New(addr string, timeout time.Duration) Cache {
 		WriteTimeout: timeout,
 		DialTimeout:  timeout / 2,
 		PoolTimeout:  timeout / 2,
-		PoolSize:     2,
 	})
 
 	return redisCache{

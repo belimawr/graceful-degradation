@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 const pathFmt = "%s/v1/%s/teams/%d"
@@ -24,8 +23,7 @@ type Team struct {
 }
 
 type fetcher struct {
-	url    string
-	client *http.Client
+	url string
 }
 
 // Fetcher interface to fetch team information
@@ -34,12 +32,9 @@ type Fetcher interface {
 }
 
 // New returns a HTTP implementation of Fetcher
-func New(url string, timeout time.Duration) Fetcher {
+func New(url string) Fetcher {
 	return fetcher{
 		url: url,
-		client: &http.Client{
-			Timeout: timeout,
-		},
 	}
 }
 
@@ -56,7 +51,9 @@ func (f fetcher) Fetch(ctx context.Context, lang string, id int) (Team, error) {
 
 	req = req.WithContext(ctx)
 
-	resp, err := f.client.Do(req)
+	// We use the http.DefaultClient as we have already set timeout on the
+	// context
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		//logger.Error().Err(err).Msg("could not call scores-api")
 		return Team{}, err

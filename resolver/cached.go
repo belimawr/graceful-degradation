@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const keyFtm = "%s-%d"
+const keyFtm = "%s-%04d"
 
 // errNotFound - error returned when a pair team/language is not found
 var errNotFound = errors.New("team/language pair not found")
@@ -150,13 +150,18 @@ func (c cached) jobFromCache(
 	key := fmt.Sprintf(keyFtm, j.lang, j.id)
 
 	val, err := c.cache.Get(ctx, key)
-	if err == cache.ErrNotFound {
+	if err != nil {
+		logger.Debug().Err(err).Msgf("cache error, job: (%s, %4d)", j.lang, j.id)
+
+		if err == cache.ErrNotFound {
+			err = errNotFound
+		}
+
 		resultChan <- result{
 			job: j,
-			err: errNotFound,
+			err: err,
 		}
 		return
-
 	}
 
 	team := Team{}
